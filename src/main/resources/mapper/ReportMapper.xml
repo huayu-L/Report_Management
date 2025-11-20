@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.ReportMapper">
+    <resultMap id="reportResultMap" type="com.example.entity.Report">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <association property="reportType" javaType="com.example.entity.ReportType">
+            <id property="id" column="type_id"/>
+            <result property="typeName" column="type_name"/>
+            <result property="description" column="description"/>
+        </association>
+        <association property="creator" javaType="com.example.entity.User">
+            <id property="id" column="creator_id"/>
+            <result property="username" column="username"/>
+            <result property="realName" column="real_name"/>
+        </association>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        r.id, r.title, r.content, r.create_time, r.update_time,
+        rt.id as type_id, rt.type_name, rt.description,
+        u.id as creator_id, u.username, u.real_name
+    </sql>
+
+    <!-- 插入报告 -->
+    <insert id="insert" parameterType="com.example.entity.Report" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO report (title, content, type_id, creator_id, create_time, update_time)
+        VALUES (#{title}, #{content}, #{reportType.id}, #{creator.id}, NOW(), NOW())
+    </insert>
+
+    <!-- 更新报告 -->
+    <update id="update" parameterType="com.example.entity.Report">
+        UPDATE report
+        SET title = #{title},
+            content = #{content},
+            type_id = #{reportType.id},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除报告 -->
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM report WHERE id = #{id}
+    </delete>
+
+    <!-- 根据ID查询报告 -->
+    <select id="selectById" resultMap="reportResultMap" parameterType="java.lang.Long">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM report r
+        LEFT JOIN report_type rt ON r.type_id = rt.id
+        LEFT JOIN user u ON r.creator_id = u.id
+        WHERE r.id = #{id}
+    </select>
+
+    <!-- 根据类型ID查询报告 -->
+    <select id="selectByTypeId" resultMap="reportResultMap" parameterType="java.lang.Integer">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM report r
+        LEFT JOIN report_type rt ON r.type_id = rt.id
+        LEFT JOIN user u ON r.creator_id = u.id
+        WHERE r.type_id = #{typeId}
+        ORDER BY r.create_time DESC
+    </select>
+
+    <!-- 查询所有报告 -->
+    <select id="selectAll" resultMap="reportResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM report r
+        LEFT JOIN report_type rt ON r.type_id = rt.id
+        LEFT JOIN user u ON r.creator_id = u.id
+        ORDER BY r.create_time DESC
+    </select>
+
+    <!-- 获取报告类型统计 -->
+    <select id="selectReportTypeStats" resultType="java.util.Map">
+        SELECT rt.type_name as typeName, COUNT(r.id) as count 
+        FROM report_types rt 
+        LEFT JOIN reports r ON rt.id = r.type_id 
+        GROUP BY rt.id, rt.type_name
+    </select>
+
+    <!-- 根据条件查询报告 -->
+    <select id="selectByCondition" resultMap="reportResultMap" parameterType="com.example.entity.Report">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM report r
+        LEFT JOIN report_type rt ON r.type_id = rt.id
+        LEFT JOIN user u ON r.creator_id = u.id
+        <where>
+            <if test="title != null and title != ''">
+                AND r.title LIKE CONCAT('%', #{title}, '%')
+            </if>
+            <if test="reportType != null and reportType.id != null">
+                AND r.type_id = #{reportType.id}
+            </if>
+            <if test="creator != null and creator.id != null">
+                AND r.creator_id = #{creator.id}
+            </if>
+        </where>
+        ORDER BY r.create_time DESC
+    </select>
+
+    <!-- 统计报告数量 -->
+    <select id="count" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM report
+    </select>
+</mapper>

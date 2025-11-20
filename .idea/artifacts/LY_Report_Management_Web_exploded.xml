@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="LY_Report_Management:Web exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/LY_Report_Management_Web_exploded</output-path>
+    <root id="root">
+      <element id="javaee-facet-resources" facet="LY_Report_Management/web/Web" />
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="LY_Report_Management" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>
